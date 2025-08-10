@@ -1,7 +1,7 @@
 [package]
 name = "rtrend"
 version = "0.1.7"
-edition = "2018"
+edition = "2024"
 authors = ["shadawck"]
 description = "Unofficial API for interacting with Google Trend"
 readme = "README.md"
@@ -14,16 +14,16 @@ categories = ["api-bindings"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-reqwest = { version = "0.11", default-features = false, features = [
+serde = "1.0"
+serde_json = "1.0"
+chrono = "0.4"
+strum = "0.27"
+strum_macros = "0.27"
+reqwest = { version = "0.12.22", default-features = false, features = [
     "cookies",
     "blocking",
     "rustls-tls",
 ] }
-serde = "1.0"
-serde_json = "1.0"
-chrono = "0.4"
-strum = "0.24"
-strum_macros = "0.24"
 
 [profile.release]
 lto = true

@@ -1,6 +1,6 @@
 //! Represent a Google Trend Property
 
-use strum_macros::{Display, EnumString, EnumVariantNames};
+use strum_macros::{Display, EnumString, VariantNames};
 /// Create a new Property.
 ///
 /// The available property are :
@@ -14,7 +14,7 @@ use strum_macros::{Display, EnumString, EnumVariantNames};
 /// let property = Property::Web;
 /// ```
 
-#[derive(Eq, PartialEq, Display, Debug, EnumString, Clone, EnumVariantNames)]
+#[derive(Eq, PartialEq, Display, Debug, EnumString, Clone, VariantNames)]
 #[strum(serialize_all = "kebab_case")]
 pub enum Property {
     #[strum(serialize = "")]

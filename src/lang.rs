@@ -1,7 +1,7 @@
 //! Represent all langage supported by google.   
 //!
 //! All langages available [here](https://github.com/shadawck/rust-trend/wiki/Langages)
-use strum_macros::{Display, EnumString, EnumVariantNames};
+use strum_macros::{Display, EnumString, VariantNames};
 
 /// Create a new langage.
 ///
@@ -13,7 +13,7 @@ use strum_macros::{Display, EnumString, EnumVariantNames};
 /// // The returned lang will be set to italian
 /// let lang = Lang::IT;
 /// ```
-#[derive(Eq, PartialEq, Display, Debug, EnumString, Clone, EnumVariantNames)]
+#[derive(Eq, PartialEq, Display, Debug, EnumString, Clone, VariantNames)]
 #[strum(serialize_all = "kebab_case")]
 pub enum Lang {
     AF,

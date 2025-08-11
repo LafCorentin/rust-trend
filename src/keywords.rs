@@ -52,10 +52,10 @@ impl From<&'static str> for Keywords {
 
 fn check_keywords(keys: Vec<&'static str>) -> Vec<&'static str> {
     if keys.is_empty() {
-        Err(KeywordMinCapacity).unwrap()
+        panic!("{:?}", KeywordMinCapacity)
     }
     if keys.len() > 5 {
-        Err(KeywordMaxCapacity).unwrap()
+        panic!("{:?}", KeywordMaxCapacity)
     }
     keys
 }

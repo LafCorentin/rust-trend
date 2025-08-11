@@ -3,9 +3,9 @@
 //! Users searching for your term also searched for these queries.
 //! You can sort by the following metrics:
 //! - Top - The most popular search queries.
-//! Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often as the most popular query, and so on.
+//!   Scoring is on a relative scale where a value of 100 is the most commonly searched query, 50 is a query searched half as often as the most popular query, and so on.
 //! - Rising - Queries with the biggest increase in search frequency since the last time period.
-//! Results marked "Breakout" had a tremendous increase, probably because these queries are new and had few (if any) prior searches.
+//!   Results marked "Breakout" had a tremendous increase, probably because these queries are new and had few (if any) prior searches.
 
 use crate::errors::KeywordNotSet;
 use crate::request_handler::Query;
@@ -107,7 +107,7 @@ impl RelatedQueries {
             .position(|&x| x == keyword);
         let keyword_index = match index {
             Some(k) => k,
-            None => Err(KeywordNotSet).unwrap(),
+            None => panic!("{:?}", KeywordNotSet),
         };
 
         self.send_request()[keyword_index].clone()

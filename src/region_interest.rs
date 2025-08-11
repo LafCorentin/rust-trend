@@ -174,7 +174,7 @@ impl RegionInterest {
 
         let keyword_index = match index {
             Some(k) => k,
-            None => Err(KeywordNotSet).unwrap(),
+            None => panic!("{:?}", KeywordNotSet),
         };
 
         self.send_request()[keyword_index].clone()

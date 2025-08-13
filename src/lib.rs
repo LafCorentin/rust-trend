@@ -113,26 +113,22 @@ pub mod related_queries;
 pub mod related_topics;
 pub mod search_interest;
 
-pub mod category;
-pub mod country;
 pub mod keywords;
-pub mod lang;
-pub mod period;
-pub mod property;
 
 mod cookie;
+mod enums;
 mod errors;
 mod request_handler;
 mod utils;
 
-pub use category::Category;
 pub use client::Client;
 pub use cookie::Cookie;
-pub use country::Country;
+pub use enums::category::Category;
+pub use enums::country::Country;
+pub use enums::lang::Lang;
+pub use enums::period::Period;
+pub use enums::property::Property;
 pub use keywords::Keywords;
-pub use lang::Lang;
-pub use period::Period;
-pub use property::Property;
 pub use region_interest::RegionInterest;
 pub use related_queries::RelatedQueries;
 pub use related_topics::RelatedTopics;

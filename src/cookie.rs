@@ -18,11 +18,7 @@ impl Cookie {
         let response = reqwest::blocking::get(COOKIE_HANDSHAKE).unwrap();
         let cookie = response.headers().get(SET_COOKIE).unwrap();
 
-        cookie
-            .to_str()
-            .unwrap().split(' ')
-            .collect::<Vec<&str>>()[0]
-            .to_string()
+        cookie.to_str().unwrap().split(' ').collect::<Vec<&str>>()[0].to_string()
     }
 
     pub fn add_to_header(&self, mut header: HeaderMap) -> HeaderMap {

@@ -6,12 +6,12 @@
 //!   Scoring is on a relative scale where a value of 100 is the most commonly searched topic and a value of 50 is a topic searched half as often as the most popular term, and so on.
 //! - Rising
 //!   Related topics with the biggest increase in search frequency since the last time period.
-//! 
+//!
 //! Results marked "Breakout" had a tremendous increase, probably because these topics are new and had few (if any) prior searches.
 
-use crate::errors::KeywordNotSet;
-use crate::request_handler::Query;
 use crate::Client;
+use crate::error::Result;
+use crate::request_handler::Query;
 use serde_json::Value;
 
 #[derive(Clone, Debug, Default)]
@@ -34,11 +34,11 @@ impl RelatedTopics {
     /// # Example
     /// ```
     /// # use rtrend::{Country, Keywords, Client, RelatedTopics};
-    /// let keywords = Keywords::new(vec!["Github vs Gitlab"]);
+    /// let keywords = Keywords::new(vec!["Github vs Gitlab"]).unwrap();
     /// let country = Country::ALL;
     /// let client = Client::new(keywords, country).build();
     ///
-    /// let related_topics = RelatedTopics::new(client).get();
+    /// let related_topics = RelatedTopics::new(client).get().unwrap();
     ///
     /// println!("{}", related_topics);
     /// ```
@@ -48,24 +48,24 @@ impl RelatedTopics {
     ///
     /// ```should_panic
     /// # use rtrend::{Country, Keywords, Client, RelatedTopics};
-    /// let keywords = Keywords::new(vec!["hacker"]);
+    /// let keywords = Keywords::new(vec!["hacker"]).unwrap();
     /// let country = Country::US;
     ///
     /// // Client not built
     /// let client = Client::new(keywords, country);
     ///
-    /// let related_topics = RelatedTopics::new(client).get();
+    /// let related_topics = RelatedTopics::new(client).get().unwrap();
     /// ```
-    pub fn get(&self) -> Value {
+    pub fn get(&self) -> Result<Value> {
         let value = self
-            .send_request()
+            .send_request()?
             .into_iter()
             .map(|x| x.to_string())
             .collect::<Vec<String>>();
         let joined = value.join(",");
         let form: String = format!("[{}]", joined);
 
-        serde_json::from_str(form.as_str()).unwrap()
+        Ok(serde_json::from_str(form.as_str())?)
     }
 
     /// Retrieve Topics data for all keywords filtered by Top Topics in descending order
@@ -74,16 +74,16 @@ impl RelatedTopics {
     /// # Example
     /// ```
     /// # use rtrend::{Country, Keywords, Client, RelatedTopics};
-    /// let keywords = Keywords::new(vec!["Github vs Gitlab"]);
+    /// let keywords = Keywords::new(vec!["Github vs Gitlab"]).unwrap();
     /// let country = Country::ALL;
     /// let client = Client::new(keywords, country).build();
     ///
-    /// let related_topics = RelatedTopics::new(client).top();
+    /// let related_topics = RelatedTopics::new(client).top().unwrap();
     ///
     /// println!("{}", related_topics);
     /// ```
-    pub fn top(&self) -> Value {
-        self.get()[0].clone()
+    pub fn top(&self) -> Result<Value> {
+        Ok(self.get()?[0].clone())
     }
 
     /// Retrieve Topics data for all keywords filtered by Rising Topics in descending order
@@ -96,16 +96,16 @@ impl RelatedTopics {
     /// # Example
     /// ```
     /// # use rtrend::{Country, Keywords, Client, RelatedTopics};
-    /// let keywords = Keywords::new(vec!["Github vs Gitlab"]);
+    /// let keywords = Keywords::new(vec!["Github vs Gitlab"]).unwrap();
     /// let country = Country::ALL;
     /// let client = Client::new(keywords, country).build();
     ///
-    /// let related_topics = RelatedTopics::new(client).rising();
+    /// let related_topics = RelatedTopics::new(client).rising().unwrap();
     ///
     /// println!("{}", related_topics);
     /// ```
-    pub fn rising(&self) -> Value {
-        self.get()[1].clone()
+    pub fn rising(&self) -> Result<Value> {
+        Ok(self.get()?[1].clone())
     }
 
     /// Retrieve Topics data for a specific keywords.
@@ -116,11 +116,11 @@ impl RelatedTopics {
     ///
     /// ```rust
     /// # use rtrend::{Country, Keywords, Client, RelatedTopics};
-    /// let keywords = Keywords::new(vec!["Github", "Gitlab"]);
+    /// let keywords = Keywords::new(vec!["Github", "Gitlab"]).unwrap();
     /// let country = Country::ALL;
     /// let client = Client::new(keywords, country).build();
     ///
-    /// let related_topics = RelatedTopics::new(client).get_for("Gitlab");
+    /// let related_topics = RelatedTopics::new(client).get_for("Gitlab").unwrap();
     ///
     /// println!("{}", related_topics);
     /// ```
@@ -129,25 +129,25 @@ impl RelatedTopics {
     ///
     /// ```should_panic
     /// # use rtrend::{Country, Keywords, Client, RelatedTopics};
-    /// let keywords = Keywords::new(vec!["PS4","XBOX","PC"]);
+    /// let keywords = Keywords::new(vec!["PS4","XBOX","PC"]).unwrap();
     /// let country = Country::ALL;
     ///
     /// let client = Client::new(keywords, country).build();
     ///
-    /// let region_interest = RelatedTopics::new(client).get_for("WII");
+    /// let region_interest = RelatedTopics::new(client).get_for("WII").unwrap();
     /// ```
-    pub fn get_for(&self, keyword: &str) -> Value {
+    pub fn get_for(&self, keyword: &str) -> Result<Value> {
         let index = self
             .client
             .keywords
             .keywords
             .iter()
             .position(|&x| x == keyword);
-        let keyword_index = match index {
-            Some(k) => k,
-            None => panic!("{:?}", KeywordNotSet),
-        };
 
-        self.send_request()[keyword_index].clone()
+        if let Some(keyword_index) = index {
+            Ok(self.send_request()?[keyword_index].clone())
+        } else {
+            Err(crate::error::Error::KeywordNotSet)
+        }
     }
 }

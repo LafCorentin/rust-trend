@@ -22,11 +22,11 @@
 //! use rtrend::{Keywords, Country, Client, RegionInterest};
 //!
 //! let country = Country::US;
-//! let keywords = Keywords::new(vec!["Instagram","Facebook"]);
+//! let keywords = Keywords::new(vec!["Instagram","Facebook"]).unwrap();
 //! let client = Client::new(keywords, country).build();
 //!
 //! // Then select the data you want. The interest of your keywords filtered by region for example:
-//! let region_interest = RegionInterest::new(client).get();
+//! let region_interest = RegionInterest::new(client).get().unwrap();
 //! println!("{}", region_interest);
 //!
 //! // Result :
@@ -117,7 +117,7 @@ pub mod keywords;
 
 mod cookie;
 mod enums;
-mod errors;
+mod error;
 mod request_handler;
 mod utils;
 

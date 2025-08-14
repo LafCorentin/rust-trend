@@ -1,8 +1,8 @@
 //! Client used to initialize everything needed by the Google Trend API.
 
-use crate::{utils, Category, Cookie, Country, Keywords, Lang, Period, Property};
+use crate::{Category, Cookie, Country, Keywords, Lang, Period, Property, utils};
 use chrono::NaiveDate;
-use reqwest::{blocking::ClientBuilder, header, Url};
+use reqwest::{Url, blocking::ClientBuilder, header};
 use serde_json::Value;
 use std::string::ToString;
 use strum::EnumProperty;
@@ -34,7 +34,7 @@ pub struct Client {
 /// # Example
 /// ```
 /// # use rtrend::{Client, Keywords, Country};
-/// let keywords = Keywords::new(vec!["rust"]);
+/// let keywords = Keywords::new(vec!["rust"]).unwrap();
 /// let country = Country::FR;
 ///
 /// let client = Client::new(keywords, country);
@@ -68,7 +68,7 @@ impl Client {
     /// # Example
     /// ```
     /// # use rtrend::{Client, Keywords, Country};
-    /// let keywords = Keywords::new(vec!["rust"]);
+    /// let keywords = Keywords::new(vec!["rust"]).unwrap();
     /// let country = Country::FR;
     ///
     /// let client = Client::new(keywords, country);
@@ -106,13 +106,13 @@ impl Client {
     /// # Example
     /// ```
     /// # use rtrend::{Client, Keywords, Country};
-    /// let keywords = Keywords::new(vec!["rust"]);
+    /// let keywords = Keywords::new(vec!["rust"]).unwrap();
     /// let country = Country::FR;
     /// let client = Client::new(keywords, country);
     ///
     /// // ...
     ///
-    /// let new_keywords = Keywords::new(vec!["python", "c++"]);
+    /// let new_keywords = Keywords::new(vec!["python", "c++"]).unwrap();
     /// let modified_client = client.with_keywords(new_keywords);
     /// ```
     pub fn with_keywords(mut self, keywords: Keywords) -> Self {
@@ -128,7 +128,7 @@ impl Client {
     /// # Example
     /// ```
     /// # use rtrend::{Client, Keywords, Country, Lang};
-    /// let keywords = Keywords::new(vec!["rust"]);
+    /// let keywords = Keywords::new(vec!["rust"]).unwrap();
     /// let country = Country::ALL;
     /// let lang = Lang::FR;
     ///
@@ -149,7 +149,7 @@ impl Client {
     /// # Example
     /// ```
     /// # use rtrend::{Client, Keywords, Country, Category};
-    /// let keywords = Keywords::new(vec!["hacking"]);
+    /// let keywords = Keywords::new(vec!["hacking"]).unwrap();
     /// let country = Country::ALL;
     /// let category = Category::EngineeringAndTechnology;
     ///
@@ -172,7 +172,7 @@ impl Client {
     /// # Example
     /// ```
     /// # use rtrend::{Client, Keywords, Country, Property};
-    /// let keywords = Keywords::new(vec!["vlog"]);
+    /// let keywords = Keywords::new(vec!["vlog"]).unwrap();
     /// let country = Country::ALL;
     ///
     /// // The response will be retrieve from youtube data
@@ -195,7 +195,7 @@ impl Client {
     /// # Example
     /// ```
     /// # use rtrend::{Client, Keywords, Country, Period};
-    /// let keywords = Keywords::new(vec!["vlog"]);
+    /// let keywords = Keywords::new(vec!["vlog"]).unwrap();
     /// let country = Country::ALL;
     ///
     /// // response will concern data from this week
@@ -215,7 +215,7 @@ impl Client {
     /// ```
     /// # use rtrend::{Client, Keywords, Country};
     /// # use chrono::prelude::*;
-    /// let keywords = Keywords::new(vec!["vlog"]);
+    /// let keywords = Keywords::new(vec!["vlog"]).unwrap();
     /// let country = Country::ALL;
     ///
     /// // response will concern data from April 25, 2020 to July 30, 2021
@@ -243,7 +243,7 @@ impl Client {
     /// # Example
     /// ```
     /// # use rtrend::{Client, Keywords, Country, Property, Category, Lang};
-    /// let keywords = Keywords::new(vec!["cat"]);
+    /// let keywords = Keywords::new(vec!["cat"]).unwrap();
     /// let country = Country::ALL;
     ///
     /// let client = Client::new(keywords, country).with_filter(
@@ -276,7 +276,7 @@ impl Client {
     /// # Example
     /// ```
     /// # use rtrend::{Client, Keywords, Country};
-    /// let keywords = Keywords::new(vec!["Cat"]);
+    /// let keywords = Keywords::new(vec!["Cat"]).unwrap();
     /// let country = Country::US;
     ///
     /// let client = Client::new(keywords, country).build();

@@ -4,9 +4,8 @@
 //! Values are calculated on a scale from 0 to 100, where 100 is the location with the most popularity as a fraction of total searches in that location, a value of 50 indicates a location which is half as popular.
 //! A value of 0 indicates a location where there was not enough data for this term.
 
-use crate::errors::KeywordNotSet;
 use crate::request_handler::Query;
-use crate::{Client, Country};
+use crate::{Client, Country, error::Result};
 use serde_json::Value;
 
 // Correpond to Multiline request => Google trend interest curve
@@ -53,11 +52,11 @@ impl RegionInterest {
     /// # Example
     /// ```
     /// # use rtrend::{Country, Keywords, Client, RegionInterest};
-    /// let keywords = Keywords::new(vec!["hacker"]);
+    /// let keywords = Keywords::new(vec!["hacker"]).unwrap();
     /// let country = Country::US;
     /// let client = Client::new(keywords, country).build();
     ///
-    /// let region_interest = RegionInterest::new(client).with_filter("CITY").get();
+    /// let region_interest = RegionInterest::new(client).with_filter("CITY").get().unwrap();
     ///
     /// println!("{}", region_interest);
     /// ```
@@ -69,11 +68,11 @@ impl RegionInterest {
     /// This example will panic
     /// ```should_panic
     /// # use rtrend::{Country, Keywords, Client, RegionInterest};
-    /// let keywords = Keywords::new(vec!["hacker"]);
+    /// let keywords = Keywords::new(vec!["hacker"]).unwrap();
     /// let country = Country::ALL;
     /// let client = Client::new(keywords, country).build();
     ///
-    /// let region_interest = RegionInterest::new(client).with_filter("REGION").get();
+    /// let region_interest = RegionInterest::new(client).with_filter("REGION").get().unwrap();
     ///
     /// println!("{}", region_interest);
     /// ```
@@ -81,11 +80,11 @@ impl RegionInterest {
     /// Instead do not filter and let the default value or use the "COUNTRY" filter
     /// ```
     /// # use rtrend::{Country, Keywords, Client, RegionInterest};
-    /// let keywords = Keywords::new(vec!["hacker"]);
+    /// let keywords = Keywords::new(vec!["hacker"]).unwrap();
     /// let country = Country::ALL;
     /// let client = Client::new(keywords, country).build();
     ///
-    /// let region_interest = RegionInterest::new(client).with_filter("COUNTRY").get();
+    /// let region_interest = RegionInterest::new(client).with_filter("COUNTRY").get().unwrap();
     /// // or
     /// // let region_interest = RegionInterest::new(client).get();
     ///  // will return the same result
@@ -107,11 +106,11 @@ impl RegionInterest {
     /// # Example
     /// ```rust
     /// # use rtrend::{Country, Keywords, Client, RegionInterest};
-    /// let keywords = Keywords::new(vec!["hacker"]);
+    /// let keywords = Keywords::new(vec!["hacker"]).unwrap();
     /// let country = Country::US;
     /// let client = Client::new(keywords, country).build();
     ///
-    /// let region_interest = RegionInterest::new(client).get();
+    /// let region_interest = RegionInterest::new(client).get().unwrap();
     ///
     /// println!("{}", region_interest);
     /// ```
@@ -121,16 +120,16 @@ impl RegionInterest {
     ///
     /// ```rust,should_panic
     /// # use rtrend::{Country, Keywords, Client, RegionInterest};
-    /// let keywords = Keywords::new(vec!["hacker"]);
+    /// let keywords = Keywords::new(vec!["hacker"]).unwrap();
     /// let country = Country::US;
     ///
     /// // Client not built
     /// let client = Client::new(keywords, country);
     ///
-    /// let region_interest = RegionInterest::new(client).get();
+    /// let region_interest = RegionInterest::new(client).get().unwrap();
     /// ```
-    pub fn get(&self) -> Value {
-        self.send_request()[0].clone()
+    pub fn get(&self) -> Result<Value> {
+        Ok(self.send_request()?[0].clone())
     }
 
     /// Retrieve maps data for a specific keywords.
@@ -142,12 +141,12 @@ impl RegionInterest {
     /// # Example
     /// ```
     /// # use rtrend::{Country, Keywords, Client, RegionInterest};
-    /// let keywords = Keywords::new(vec!["PS4","XBOX","PC"]);
+    /// let keywords = Keywords::new(vec!["PS4","XBOX","PC"]).unwrap();
     /// let country = Country::ALL;
     ///
     /// let client = Client::new(keywords, country).build();
     ///
-    /// let region_interest = RegionInterest::new(client).get_for("PS4");
+    /// let region_interest = RegionInterest::new(client).get_for("PS4").unwrap();
     ///
     /// println!("{}", region_interest);
     /// ```
@@ -157,14 +156,14 @@ impl RegionInterest {
     ///
     /// ```should_panic
     /// # use rtrend::{Country, Keywords, Client, RegionInterest};
-    /// let keywords = Keywords::new(vec!["PS4","XBOX","PC"]);
+    /// let keywords = Keywords::new(vec!["PS4","XBOX","PC"]).unwrap();
     /// let country = Country::ALL;
     ///
     /// let client = Client::new(keywords, country).build();
     ///
-    /// let region_interest = RegionInterest::new(client).get_for("WII");
+    /// let region_interest = RegionInterest::new(client).get_for("WII").unwrap();
     /// ```
-    pub fn get_for(&self, keyword: &str) -> Value {
+    pub fn get_for(&self, keyword: &str) -> Result<Value> {
         let index = self
             .client
             .keywords
@@ -172,11 +171,10 @@ impl RegionInterest {
             .iter()
             .position(|&x| x == keyword);
 
-        let keyword_index = match index {
-            Some(k) => k,
-            None => panic!("{:?}", KeywordNotSet),
-        };
-
-        self.send_request()[keyword_index].clone()
+        if let Some(keyword_index) = index {
+            Ok(self.send_request()?[keyword_index].clone())
+        } else {
+            Err(crate::error::Error::KeywordNotSet)
+        }
     }
 }

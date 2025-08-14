@@ -1,36 +1,34 @@
 use std::collections::HashMap;
 
 use crate::{
-    utils, Client, Keywords, RegionInterest, RelatedQueries, RelatedTopics, SearchInterest,
+    Client, Keywords, RegionInterest, RelatedQueries, RelatedTopics, SearchInterest,
+    error::{Error, Result},
+    utils,
 };
-use reqwest::{blocking::RequestBuilder, Url};
+use reqwest::{Url, blocking::RequestBuilder};
 use serde_json::Value;
 
 pub trait Query {
     // Build queries for all type of search
-    fn build_request(&self) -> Vec<RequestBuilder>;
+    fn build_request(&self) -> Result<Vec<RequestBuilder>>;
 
     // Send queries for request build previously
-    fn send_request(&self) -> Vec<Value> {
+    fn send_request(&self) -> Result<Vec<Value>> {
         const BAD_CHARACTER: usize = 5;
         let mut responses: Vec<Value> = Vec::new();
 
-        for request in self.build_request() {
-            let resp = request.send();
-            let resp = match resp {
-                Ok(resp) => resp,
-                Err(error) => panic!("Can't get client response: {:?}", error),
-            };
+        for request in self.build_request()? {
+            let resp = request.send()?;
             let body = resp.text().unwrap();
             let clean_response = utils::sanitize_response(&body, BAD_CHARACTER);
             responses.push(serde_json::from_str(clean_response).unwrap());
         }
-        responses
+        Ok(responses)
     }
 }
 
 impl Query for SearchInterest {
-    fn build_request(&self) -> Vec<RequestBuilder> {
+    fn build_request(&self) -> Result<Vec<RequestBuilder>> {
         const MULTILINE_ENDPOINT: &str =
             "https://trends.google.com/trends/api/widgetdata/multiline";
         let url = Url::parse(MULTILINE_ENDPOINT).unwrap();
@@ -40,12 +38,12 @@ impl Query for SearchInterest {
             .to_string()
             .replace('\"', "");
 
-        vec![build_query(&self.client, url, request, token)]
+        Ok(vec![build_query(&self.client, url, request, token)])
     }
 }
 
 impl Query for RegionInterest {
-    fn build_request(&self) -> Vec<RequestBuilder> {
+    fn build_request(&self) -> Result<Vec<RequestBuilder>> {
         const COMPAREDGEO_ENDPOINT: &str =
             "https://trends.google.com/trends/api/widgetdata/comparedgeo";
         let url = Url::parse(COMPAREDGEO_ENDPOINT).unwrap();
@@ -54,17 +52,22 @@ impl Query for RegionInterest {
 
         if keywords_nb == 1 {
             let request = self.client.response["widgets"][1]["request"].clone();
-            let mod_region_request = mod_region_request(request, self.resolution).to_string();
+            let mod_region_request = mod_region_request(request, self.resolution)?.to_string();
 
             let token = self.client.response["widgets"][1]["token"]
                 .to_string()
                 .replace('\"', "");
 
-            vec![build_query(&self.client, url, mod_region_request, token)]
+            Ok(vec![build_query(
+                &self.client,
+                url,
+                mod_region_request,
+                token,
+            )])
         } else {
             for i in 1..=keywords_nb {
                 let request = self.client.response["widgets"][i * 3]["request"].clone();
-                let mod_region_request = mod_region_request(request, self.resolution).to_string();
+                let mod_region_request = mod_region_request(request, self.resolution)?.to_string();
 
                 let token = self.client.response["widgets"][i * 3]["token"]
                     .to_string()
@@ -77,13 +80,13 @@ impl Query for RegionInterest {
                 ));
             }
 
-            requests
+            Ok(requests)
         }
     }
 }
 
 impl Query for RelatedTopics {
-    fn build_request(&self) -> Vec<RequestBuilder> {
+    fn build_request(&self) -> Result<Vec<RequestBuilder>> {
         const RELATED_SEARCH_ENDPOINT: &str =
             "https://trends.google.com/trends/api/widgetdata/relatedsearches";
         let url = Url::parse(RELATED_SEARCH_ENDPOINT).unwrap();
@@ -95,10 +98,10 @@ impl Query for RelatedTopics {
             let token = self.client.response["widgets"][2]["token"]
                 .to_string()
                 .replace('\"', "");
-            vec![build_query(&self.client, url, request, token)]
+            Ok(vec![build_query(&self.client, url, request, token)])
         } else {
             for keyword in &keywords {
-                let individual_keyword = Keywords::new(vec![keyword]);
+                let individual_keyword = Keywords::new(vec![keyword])?;
 
                 let new_client = self
                     .client
@@ -112,13 +115,13 @@ impl Query for RelatedTopics {
                 requests.push(build_query(&new_client, url.clone(), request, token));
             }
 
-            requests
+            Ok(requests)
         }
     }
 }
 
 impl Query for RelatedQueries {
-    fn build_request(&self) -> Vec<RequestBuilder> {
+    fn build_request(&self) -> Result<Vec<RequestBuilder>> {
         const RELATED_QUERY_ENDPOINT: &str =
             "https://trends.google.com/trends/api/widgetdata/relatedsearches";
         let url = Url::parse(RELATED_QUERY_ENDPOINT).unwrap();
@@ -131,7 +134,7 @@ impl Query for RelatedQueries {
             let token = self.client.response["widgets"][3]["token"]
                 .to_string()
                 .replace('\"', "");
-            vec![build_query(&self.client, url, request, token)]
+            Ok(vec![build_query(&self.client, url, request, token)])
         } else {
             for i in 1..=keywords_nb {
                 let request = self.client.response["widgets"][i * 3 + 1]["request"].to_string();
@@ -140,7 +143,7 @@ impl Query for RelatedQueries {
                     .replace('\"', "");
                 requests.push(build_query(&self.client, url.clone(), request, token));
             }
-            requests
+            Ok(requests)
         }
     }
 }
@@ -155,14 +158,14 @@ fn build_query(client: &Client, url: Url, request: String, token: String) -> Req
     ])
 }
 
-fn mod_region_request(request: Value, resolution: &str) -> Value {
+fn mod_region_request(request: Value, resolution: &str) -> Result<Value> {
     let mut config: HashMap<String, Value> =
         serde_json::from_value(request).expect("unable to parse JSON request");
     if let Some(mut res) = config["resolution"].as_str() {
         res = resolution;
         config.insert("resolution".to_string(), Value::from(res));
+        Ok(serde_json::to_value(config)?)
     } else {
-        panic!("Unknown resolution");
+        Err(Error::JsonParsingFailed)
     }
-    serde_json::to_value(config).unwrap()
 }

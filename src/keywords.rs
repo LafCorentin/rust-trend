@@ -1,8 +1,7 @@
 //! A list of keywords to query on Google Trend
 //! Keywords is limited to a maximum of 5 keywords.
 
-use crate::errors::{KeywordMaxCapacity, KeywordMinCapacity};
-use std::fmt::{Display, Formatter, Result};
+use crate::error::{Error, Result};
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Keywords {
@@ -27,41 +26,34 @@ impl Keywords {
     /// ```should_panic
     /// # use rtrend::Keywords;
     /// let seven_dwarf = vec!["Bashful","Doc", "Dopey","Grumpy","Happy", "Sleepy", "Sneezy"];
-    /// let keywords = Keywords::new(seven_dwarf);
+    /// let keywords = Keywords::new(seven_dwarf).unwrap();
     /// ```
     ///
     /// A vector without keywords will also panic.
     /// ```should_panic
     /// # use rtrend::Keywords;
-    /// let keywords = Keywords::new(vec![]);
+    /// let keywords = Keywords::new(vec![]).unwrap();
     /// ```
-    pub fn new(keywords: Vec<&'static str>) -> Self {
-        Self {
-            keywords: check_keywords(keywords),
-        }
+    pub fn new(keywords: Vec<&'static str>) -> Result<Self> {
+        check_keywords(&keywords)?;
+        Ok(Self { keywords })
     }
 }
 
-impl From<&'static str> for Keywords {
-    fn from(item: &'static str) -> Self {
-        Self {
-            keywords: check_keywords(item.split(',').collect()),
-        }
+impl TryFrom<&'static str> for Keywords {
+    fn try_from(item: &'static str) -> Result<Self> {
+        Keywords::new(item.split(',').collect())
     }
+
+    type Error = Error;
 }
 
-fn check_keywords(keys: Vec<&'static str>) -> Vec<&'static str> {
+fn check_keywords(keys: &Vec<&'static str>) -> Result<()> {
     if keys.is_empty() {
-        panic!("{:?}", KeywordMinCapacity)
-    }
-    if keys.len() > 5 {
-        panic!("{:?}", KeywordMaxCapacity)
-    }
-    keys
-}
-
-impl Display for Keywords {
-    fn fmt(&self, f: &mut Formatter) -> Result {
-        write!(f, "{:#?}", self.keywords)
+        Err(Error::KeywordNotSet)
+    } else if keys.len() > 5 {
+        Err(Error::KeywordMaxCapacity)
+    } else {
+        Ok(())
     }
 }

@@ -7,9 +7,8 @@
 //! - Rising - Queries with the biggest increase in search frequency since the last time period.
 //!   Results marked "Breakout" had a tremendous increase, probably because these queries are new and had few (if any) prior searches.
 
-use crate::errors::KeywordNotSet;
 use crate::request_handler::Query;
-use crate::Client;
+use crate::{Client, error::Result};
 
 use serde_json::Value;
 
@@ -35,11 +34,11 @@ impl RelatedQueries {
     /// # Example
     /// ```
     /// # use rtrend::{Country, Keywords, Client, RelatedQueries};
-    /// let keywords = Keywords::new(vec!["Github vs Gitlab"]);
+    /// let keywords = Keywords::new(vec!["Github vs Gitlab"]).unwrap();
     /// let country = Country::ALL;
     /// let client = Client::new(keywords, country).build();
     ///
-    /// let related_queries = RelatedQueries::new(client).get();
+    /// let related_queries = RelatedQueries::new(client).get().unwrap();
     ///
     /// println!("{}", related_queries);
     /// ```
@@ -49,15 +48,15 @@ impl RelatedQueries {
     ///
     /// ```should_panic
     /// # use rtrend::{Country, Keywords, Client, RelatedQueries};
-    /// let keywords = Keywords::new(vec!["Github vs Gitlab"]);
+    /// let keywords = Keywords::new(vec!["Github vs Gitlab"]).unwrap();
     /// let country = Country::ALL;
     /// let client = Client::new(keywords, country);
     ///
-    /// let related_queries = RelatedQueries::new(client).get();
+    /// let related_queries = RelatedQueries::new(client).get().unwrap();
     /// ```
-    pub fn get(&self) -> Value {
+    pub fn get(&self) -> Result<Value> {
         let value = self
-            .send_request()
+            .send_request()?
             .into_iter()
             .map(|x| x.to_string())
             .collect::<Vec<String>>();
@@ -65,7 +64,7 @@ impl RelatedQueries {
 
         let form: String = format!("[{}]", joined);
 
-        serde_json::from_str(form.as_str()).unwrap()
+        Ok(serde_json::from_str(form.as_str())?)
     }
 
     /// Retrieve Queries data for a specific keywords.
@@ -76,12 +75,12 @@ impl RelatedQueries {
     ///
     /// ```rust
     /// # use rtrend::{Country, Keywords, Client, RelatedQueries};
-    /// let keywords = Keywords::new(vec!["Github", "Gitlab"]);
+    /// let keywords = Keywords::new(vec!["Github", "Gitlab"]).unwrap();
     /// let country = Country::ALL;
     ///
     /// let client = Client::new(keywords, country).build();
     ///
-    /// let related_queries = RelatedQueries::new(client).get_for("Gitlab");
+    /// let related_queries = RelatedQueries::new(client).get_for("Gitlab").unwrap();
     ///
     /// println!("{}", related_queries);
     /// ```
@@ -91,25 +90,25 @@ impl RelatedQueries {
     ///
     /// ```should_panic
     /// # use rtrend::{Country, Keywords, Client, RelatedQueries};
-    /// let keywords = Keywords::new(vec!["PS4","XBOX","PC"]);
+    /// let keywords = Keywords::new(vec!["PS4","XBOX","PC"]).unwrap();
     /// let country = Country::ALL;
     ///
     /// let client = Client::new(keywords, country).build();
     ///
-    /// let region_interest = RelatedQueries::new(client).get_for("WII");
+    /// let region_interest = RelatedQueries::new(client).get_for("WII").unwrap();
     /// ```
-    pub fn get_for(&self, keyword: &str) -> Value {
+    pub fn get_for(&self, keyword: &str) -> Result<Value> {
         let index = self
             .client
             .keywords
             .keywords
             .iter()
             .position(|&x| x == keyword);
-        let keyword_index = match index {
-            Some(k) => k,
-            None => panic!("{:?}", KeywordNotSet),
-        };
 
-        self.send_request()[keyword_index].clone()
+        if let Some(keyword_index) = index {
+            Ok(self.send_request()?[keyword_index].clone())
+        } else {
+            Err(crate::error::Error::KeywordNotSet)
+        }
     }
 }

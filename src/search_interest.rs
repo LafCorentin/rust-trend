@@ -4,8 +4,9 @@
 //! A value of 100 is the peak popularity for the term. A value of 50 means that the term is half as popular.
 //! A score of 0 means there was not enough data for this term.
 
-use crate::request_handler::Query;
 use crate::Client;
+use crate::error::Result;
+use crate::request_handler::Query;
 
 use serde_json::Value;
 
@@ -29,16 +30,16 @@ impl SearchInterest {
     /// Returns a JSON serde Value (`serde_json::Value`).
     /// ```
     /// # use rtrend::{Country, Keywords, Client, SearchInterest};
-    /// let keywords = Keywords::new(vec!["Candy"]);
+    /// let keywords = Keywords::new(vec!["Candy"]).unwrap();
     /// let country = Country::US;
     ///
     /// let client = Client::new(keywords, country).build();
     ///
-    /// let search_interest = SearchInterest::new(client).get();
+    /// let search_interest = SearchInterest::new(client).get().unwrap();
     ///
     /// println!("{}", search_interest);
     /// ```
-    pub fn get(&self) -> Value {
-        self.send_request()[0].clone()
+    pub fn get(&self) -> Result<Value> {
+        Ok(self.send_request()?[0].clone())
     }
 }

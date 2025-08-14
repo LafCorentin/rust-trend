@@ -1,7 +1,7 @@
-use rtrend::{Client, Country, Keywords, Lang, Property, Category,RelatedQueries};
+use rtrend::{Category, Client, Country, Keywords, Lang, Property, RelatedQueries};
 
 fn main() {
-    let keywords = Keywords::new(vec!["Pasta"]);
+    let keywords = Keywords::new(vec!["Pasta"]).unwrap();
     let country = Country::IT;
 
     // Set response lang to french and search on Google Image
@@ -13,6 +13,6 @@ fn main() {
         .with_property(property)
         .with_category(Category::FoodAndDrink)
         .build();
-    let related_queries = RelatedQueries::new(client).get();
+    let related_queries = RelatedQueries::new(client).get().unwrap();
     println!("{}", related_queries);
 }
